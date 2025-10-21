@@ -1,0 +1,138 @@
+import axios from 'axios';
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+
+function Login() {
+  const navigate = useNavigate();
+  const [credentials, setCredentials] = React.useState({ email: '', password: '' });
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setCredentials(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (!credentials.email.trim() || !credentials.password.trim()) {
+      setError('Email and password are required');
+      return;
+    }
+    try {
+      setLoading(true);
+      const { data } = await axios.post('http://localhost:8080/login', credentials);
+      const displayName = data.user?.name || data.name || '';
+      // Example: store token / user if backend returns them
+      if (data.token) {
+        localStorage.setItem('auth_token', data.token);
+      }
+      alert(`Login successful${displayName ? ' | Welcome ' + displayName : ''}`);
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 px-4">
+        <div className="relative bg-white bg-opacity-95 backdrop-blur-lg p-8 rounded-2xl shadow-2xl w-full max-w-md animate-fade-in-up overflow-hidden">
+          {loading && (
+            <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center justify-center gap-4">
+              <div className="w-14 h-14 border-4 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+              <p className="text-sm font-medium text-blue-700 tracking-wide">Authenticating...</p>
+            </div>
+          )}
+          <h2 className="text-3xl font-bold text-center text-blue-600 mb-6">
+            Login
+          </h2>
+
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            {/* Email */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-1" htmlFor="email">
+                Email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Enter your email"
+                className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm"
+                value={credentials.email}
+                onChange={handleChange}
+                disabled={loading}
+                autoComplete="email"
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-1" htmlFor="password">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="Enter your password"
+                className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 shadow-sm"
+                value={credentials.password}
+                onChange={handleChange}
+                disabled={loading}
+                autoComplete="current-password"
+              />
+            </div>
+
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-md">
+                {error}
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full relative bg-blue-600 text-white py-3 rounded-xl font-semibold shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400 overflow-hidden
+                ${loading ? 'opacity-70 cursor-wait' : 'hover:bg-blue-700 hover:scale-105'}`}
+            >
+              <span className={loading ? 'invisible' : 'visible'}>Login</span>
+              {loading && (
+                <span className="absolute inset-0 flex items-center justify-center">
+                  <svg className="w-6 h-6 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-30" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                </span>
+              )}
+            </button>
+          </form>
+
+          {/* Footer Links */}
+          <div className="flex justify-between mt-6 text-sm text-gray-600">
+            <Link to="/register" className="hover:underline text-blue-600">
+              Don’t have an account? Register
+            </Link>
+            <Link to="/forgot-password" className="hover:underline text-purple-600">
+              Forgot Password?
+            </Link>
+          </div>
+        </div>
+
+        {/* Custom Animations */}
+        <style>{`
+          .animate-fade-in-up { animation: fadeInUp 0.9s ease; }
+          @keyframes fadeInUp { from { opacity:0; transform: translateY(30px); } to { opacity:1; transform: translateY(0); } }
+        `}</style>
+      </div>
+    </>
+  );
+}
+
+export default Login;
